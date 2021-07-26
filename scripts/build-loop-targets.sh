@@ -26,7 +26,7 @@ do
     SDKVERSION="${TVOS_SDKVERSION}"
   elif [[ "${TARGET}" == watchos* ]]; then
     SDKVERSION="${WATCHOS_SDKVERSION}"
-  elif [[ "${TARGET}" == "mac-catalyst"* ]]; then
+  elif [[ "${TARGET}" == "mac"* ]]; then
     SDKVERSION="${MACOSX_SDKVERSION}"
   else
     SDKVERSION="${IOS_SDKVERSION}"
@@ -50,7 +50,7 @@ do
     PLATFORM="WatchSimulator"
   elif [[ "${TARGET}" == "watchos-cross-"* ]]; then
     PLATFORM="WatchOS"
-  elif [[ "${TARGET}" == "mac-catalyst-"* ]]; then
+  elif [[ "${TARGET}" == "mac-"* ]]; then
     PLATFORM="MacOSX"
   else
     PLATFORM="iPhoneOS"

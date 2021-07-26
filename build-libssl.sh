@@ -28,7 +28,8 @@ set -u
 DEFAULTVERSION="1.1.1k"
 
 # Default (=full) set of targets to build
-DEFAULTTARGETS="ios-sim-cross-x86_64 ios-sim-cross-arm64 ios-cross-armv7 ios-cross-arm64 mac-catalyst-x86_64 mac-catalyst-arm64 tvos-sim-cross-x86_64 tvos-sim-cross-arm64 tvos-cross-arm64 watchos-sim-cross-x86_64 watchos-sim-cross-arm64 watchos-cross-armv7k watchos-cross-arm64_32"
+DEFAULTTARGETS="mac-x86_64 mac-arm64"
+#DEFAULTTARGETS="ios-sim-cross-x86_64 ios-sim-cross-arm64 ios-cross-armv7 ios-cross-arm64 mac-catalyst-x86_64 mac-catalyst-arm64 tvos-sim-cross-x86_64 tvos-sim-cross-arm64 tvos-cross-arm64 watchos-sim-cross-x86_64 watchos-sim-cross-arm64 watchos-cross-armv7k watchos-cross-arm64_32"
 # Excluded targets:
 #   ios-sim-cross-i386  Legacy
 #   ios-cross-armv7s    Dropped by Apple in Xcode 6 (https://www.cocoanetics.com/2014/10/xcode-6-drops-armv7s/)
@@ -62,7 +63,7 @@ echo_help()
   echo "     --version=VERSION             OpenSSL version to build (defaults to ${DEFAULTVERSION})"
   echo "     --deprecated                  Exclude no-deprecated configure option and build with deprecated methods"
   echo "     --targets=\"TARGET TARGET ...\" Space-separated list of build targets"
-  echo "                                     Options: ${DEFAULTTARGETS} mac-catalyst-x86_64"
+  echo "                                     Options: ${DEFAULTTARGETS} mac-x86_64"
   echo
   echo "For custom configure options, set variable CONFIG_OPTIONS"
   echo "For custom cURL options, set variable CURL_OPTIONS"
@@ -188,10 +189,10 @@ finish_build_loop()
     LIBSSL_WATCHOSSIM+=("${TARGETDIR}/lib/libssl.a")
     LIBCRYPTO_WATCHOSSIM+=("${TARGETDIR}/lib/libcrypto.a")
     OPENSSLCONF_SUFFIX="watchos_${ARCH}"
-  else # Catalyst
-    LIBSSL_CATALYST+=("${TARGETDIR}/lib/libssl.a")
-    LIBCRYPTO_CATALYST+=("${TARGETDIR}/lib/libcrypto.a")
-    OPENSSLCONF_SUFFIX="catalyst_${ARCH}"
+  else # macOS
+    LIBSSL_MACOS+=("${TARGETDIR}/lib/libssl.a")
+    LIBCRYPTO_MACOS+=("${TARGETDIR}/lib/libcrypto.a")
+    OPENSSLCONF_SUFFIX="macos_${ARCH}"
   fi
 
   # Copy opensslconf.h to bin directory and add to array
@@ -483,8 +484,8 @@ LIBSSL_WATCHOS=()
 LIBSSL_WATCHOSSIM=()
 LIBCRYPTO_WATCHOS=()
 LIBCRYPTO_WATCHOSSIM=()
-LIBSSL_CATALYST=()
-LIBCRYPTO_CATALYST=()
+LIBSSL_MACOS=()
+LIBCRYPTO_MACOS=()
 
 # Run relevant build loop
 source "${SCRIPTDIR}/scripts/build-loop-targets.sh"
@@ -543,14 +544,14 @@ if [ ${#LIBSSL_WATCHOSSIM[@]} -gt 0 ]; then
   echo "${CURRENTPATH}/lib/libcrypto-watchOS-Sim.a"
 fi
 
-# Build Catalyst library if selected for build
-if [ ${#LIBSSL_CATALYST[@]} -gt 0 ]; then
-  echo "Build library for Catalyst..."
-  lipo -create ${LIBSSL_CATALYST[@]} -output "${CURRENTPATH}/lib/libssl-Catalyst.a"
-  lipo -create ${LIBCRYPTO_CATALYST[@]} -output "${CURRENTPATH}/lib/libcrypto-Catalyst.a"
+# Build macOS library if selected for build
+if [ ${#LIBSSL_MACOS[@]} -gt 0 ]; then
+  echo "Build library for macOS..."
+  lipo -create ${LIBSSL_MACOS[@]} -output "${CURRENTPATH}/lib/libssl-macOS.a"
+  lipo -create ${LIBCRYPTO_MACOS[@]} -output "${CURRENTPATH}/lib/libcrypto-macOS.a"
   echo "\n=====>Catalyst SSL and Crypto lib files:"
-  echo "${CURRENTPATH}/lib/libssl-Catalyst.a"
-  echo "${CURRENTPATH}/lib/libcrypto-Catalyst.a"
+  echo "${CURRENTPATH}/lib/libssl-macOS.a"
+  echo "${CURRENTPATH}/lib/libcrypto-macOS.a"
 fi
 
 # Copy include directory
@@ -595,11 +596,11 @@ if [ ${#OPENSSLCONF_ALL[@]} -gt 1 ]; then
       *_ios_armv7.h)
         DEFINE_CONDITION="TARGET_OS_IOS && TARGET_OS_EMBEDDED && TARGET_CPU_ARM && !defined(__ARM_ARCH_7S__)"
       ;;
-      *_catalyst_x86_64.h)
-        DEFINE_CONDITION="(TARGET_OS_MACCATALYST || (TARGET_OS_IOS && TARGET_OS_SIMULATOR)) && TARGET_CPU_X86_64"
+      *_macos_x86_64.h)
+        DEFINE_CONDITION="TARGET_OS_OSX && TARGET_CPU_X86_64"
       ;;
-      *_catalyst_arm64.h)
-        DEFINE_CONDITION="(TARGET_OS_MACCATALYST || (TARGET_OS_IOS && TARGET_OS_SIMULATOR)) && TARGET_CPU_ARM64"
+      *_macos_arm64.h)
+        DEFINE_CONDITION="TARGET_OS_OSX && TARGET_CPU_ARM64"
       ;;
       *_tvos_x86_64.h)
         DEFINE_CONDITION="TARGET_OS_TV && TARGET_OS_SIMULATOR && TARGET_CPU_X86_64"
